@@ -1,0 +1,6 @@
+pymongo==4.8.0
+sentence-transformers==3.0.1
+numpy==2.3.4
+torch==2.9.0
+scikit-learn==1.7.2
+
