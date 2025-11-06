@@ -1,16 +1,16 @@
-## Tarea 3 · MongoDB Replica Set + Búsqueda Semántica
+﻿## Tarea 3 Â· MongoDB Replica Set + BÃºsqueda SemÃ¡ntica
 
 Este repositorio contiene todo lo solicitado en la Tarea 3 de INF-239:
 
-- `deploy-ROL1-ROL2.yml` y `docker-compose.yml` describen el Replica Set de 3 nodos (1 primario + 2 secundarios) con `mongod --replSet my-replicaset`, keyfile y volumenes persistentes.
-- `docker/init/init-rs.js` inicializa el Replica Set automáticamente mediante el servicio auxiliar `rs-init`.
-- `conectarMongo.py` automatiza el procesamiento del corpus `DiscursosOriginales` y las consultas semánticas sobre la colección `Politica.Discursos`.
+- `deploy-202373011-4-202304074-6.yml` y `docker-compose.yml` describen el Replica Set de 3 nodos (1 primario + 2 secundarios) con `mongod --replSet my-replicaset`, keyfile y volumenes persistentes.
+- `docker/init/init-rs.js` inicializa el Replica Set automÃ¡ticamente mediante el servicio auxiliar `rs-init`.
+- `conectarMongo.py` automatiza el procesamiento del corpus `DiscursosOriginales` y las consultas semÃ¡nticas sobre la colecciÃ³n `Politica.Discursos`.
 - `discursos-final-rol1-rol2.json` es el respaldo exportado con todos los documentos ya vectorizados.
-- `pymongo-ROL1-ROL2.ipynb` reúne las evidencias pedidas (despliegue, ingesta, consultas y guía de robustez).
+- `pymongo-ROL1-ROL2.ipynb` reÃºne las evidencias pedidas (despliegue, ingesta, consultas y guÃ­a de robustez).
 
 ### Requisitos previos
 
-1. **Docker Desktop** encendido (la conexión da error si el servicio `com.docker.service` está detenido).
+1. **Docker Desktop** encendido (la conexiÃ³n da error si el servicio `com.docker.service` estÃ¡ detenido).
 2. **Python 3.10+** con `pip`. Ejecuta:
 
    ```powershell
@@ -27,12 +27,12 @@ Este repositorio contiene todo lo solicitado en la Tarea 3 de INF-239:
    127.0.0.1   mongo3
    ```
 
-4. (Opcional) Activa *Developer Mode* en Windows para que HuggingFace pueda crear symlinks en el caché.
+4. (Opcional) Activa *Developer Mode* en Windows para que HuggingFace pueda crear symlinks en el cachÃ©.
 
 ### Puesta en marcha del Replica Set
 
 ```powershell
-docker compose -f deploy-ROL1-ROL2.yml up -d
+docker compose -f deploy-202373011-4-202304074-6.yml up -d
 # o durante el desarrollo
 docker compose up -d
 ```
@@ -46,7 +46,7 @@ docker exec -it mongo1 mongosh --port 30001 --eval "rs.status()"
 Para apagar la infraestructura:
 
 ```powershell
-docker compose -f deploy-ROL1-ROL2.yml down
+docker compose -f deploy-202373011-4-202304074-6.yml down
 ```
 
 ### Pipeline de ingesta + export
@@ -58,7 +58,7 @@ docker compose -f deploy-ROL1-ROL2.yml down
    python conectarMongo.py --ingest --skip-db  # solo genera el JSON
    ```
 
-2. El script calcula el hash SHA-256 del texto, genera embeddings con `sentence-transformers/all-MiniLM-L6-v2`, normaliza los vectores y los almacena así:
+2. El script calcula el hash SHA-256 del texto, genera embeddings con `sentence-transformers/all-MiniLM-L6-v2`, normaliza los vectores y los almacena asÃ­:
 
    ```json
    {
@@ -75,12 +75,12 @@ docker compose -f deploy-ROL1-ROL2.yml down
 
 3. Los mismos documentos quedan guardados en `discursos-final-rol1-rol2.json` para el entregable 3.
 
-### Consultas semánticas
+### Consultas semÃ¡nticas
 
 Ejecuta:
 
 ```powershell
-python conectarMongo.py --query "Mensaje presidencial sobre educación pública"
+python conectarMongo.py --query "Mensaje presidencial sobre educaciÃ³n pÃºblica"
 ```
 
 El script:
@@ -92,13 +92,13 @@ El script:
 ### Evidencias y pruebas solicitadas
 
 - Abre `pymongo-ROL1-ROL2.ipynb` (ya ejecutado) para revisar:
-  - Comandos de despliegue (con mensajes cuando Docker no está activo).
-  - Ejecución del pipeline de ingesta y vista previa de los documentos en el JSON final.
-  - Consulta semántica offline para documentar los resultados.
-  - Guía para validar consistencia y alta disponibilidad (pasos de `docker stop/start` y `rs.status()`).
+  - Comandos de despliegue (con mensajes cuando Docker no estÃ¡ activo).
+  - EjecuciÃ³n del pipeline de ingesta y vista previa de los documentos en el JSON final.
+  - Consulta semÃ¡ntica offline para documentar los resultados.
+  - GuÃ­a para validar consistencia y alta disponibilidad (pasos de `docker stop/start` y `rs.status()`).
 - En la defensa puedes repetir las celdas que usan `run_cmd` para capturar las salidas en vivo.
 
-### Robustez (sección 4 del enunciado)
+### Robustez (secciÃ³n 4 del enunciado)
 
 1. **Consistencia**: Inserta/actualiza documentos con `python conectarMongo.py --ingest` y verifica en cada nodo:
    ```powershell
@@ -117,7 +117,7 @@ El script:
 ### Limpieza
 
 ```powershell
-docker compose -f deploy-ROL1-ROL2.yml down -v
+docker compose -f deploy-202373011-4-202304074-6.yml down -v
 Remove-Item .venv -Recurse -Force  # opcional
 ```
 
