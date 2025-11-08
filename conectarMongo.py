@@ -1,6 +1,4 @@
 """
-CLI para preparar el corpus de discursos e interactuar con el Replica Set de MongoDB.
-
 Funciones principales:
 1. --ingest: Calcula los embeddings del corpus DiscursosOriginales y los inserta en la
    colección Politica.Discursos.
@@ -35,7 +33,7 @@ DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 DEFAULT_DB = "Politica"
 DEFAULT_COLLECTION = "Discursos"
 DEFAULT_DATASET = Path("DiscursosOriginales")
-DEFAULT_EXPORT = Path("discursos-final-rol1-rol2.json")
+DEFAULT_EXPORT = Path("discursos-final-202373011-4-202304074-6.json")
 
 
 def build_client(uri: str) -> MongoClient:
@@ -250,4 +248,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

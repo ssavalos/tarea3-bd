@@ -5,12 +5,18 @@ services:
     image: mongo:7.0
     container_name: mongo1
     hostname: mongo1
-    command: ["mongod", "--replSet", "my-replicaset", "--port", "30001", "--bind_ip_all", "--keyFile", "/run/secrets/mongo-keyfile"]
+    command:
+      [
+        "bash",
+        "-c",
+        "cp /run/secrets/mongo-keyfile /tmp/mongo-keyfile && chmod 600 /tmp/mongo-keyfile && exec mongod --replSet my-replicaset --port 30001 --bind_ip_all --keyFile /tmp/mongo-keyfile",
+      ]
     ports:
       - "30001:30001"
     volumes:
       - ./volumes/mongo1:/data/db
-      - ./docker/keyfile/mongo-keyfile:/run/secrets/mongo-keyfile:ro
+    secrets:
+      - mongo-keyfile
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --port 30001 --eval 'db.adminCommand({ ping: 1 })'"]
       interval: 10s
@@ -22,12 +28,18 @@ services:
     image: mongo:7.0
     container_name: mongo2
     hostname: mongo2
-    command: ["mongod", "--replSet", "my-replicaset", "--port", "30002", "--bind_ip_all", "--keyFile", "/run/secrets/mongo-keyfile"]
+    command:
+      [
+        "bash",
+        "-c",
+        "cp /run/secrets/mongo-keyfile /tmp/mongo-keyfile && chmod 600 /tmp/mongo-keyfile && exec mongod --replSet my-replicaset --port 30002 --bind_ip_all --keyFile /tmp/mongo-keyfile",
+      ]
     ports:
       - "30002:30002"
     volumes:
       - ./volumes/mongo2:/data/db
-      - ./docker/keyfile/mongo-keyfile:/run/secrets/mongo-keyfile:ro
+    secrets:
+      - mongo-keyfile
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --port 30002 --eval 'db.adminCommand({ ping: 1 })'"]
       interval: 10s
@@ -42,12 +54,18 @@ services:
     image: mongo:7.0
     container_name: mongo3
     hostname: mongo3
-    command: ["mongod", "--replSet", "my-replicaset", "--port", "30003", "--bind_ip_all", "--keyFile", "/run/secrets/mongo-keyfile"]
+    command:
+      [
+        "bash",
+        "-c",
+        "cp /run/secrets/mongo-keyfile /tmp/mongo-keyfile && chmod 600 /tmp/mongo-keyfile && exec mongod --replSet my-replicaset --port 30003 --bind_ip_all --keyFile /tmp/mongo-keyfile",
+      ]
     ports:
       - "30003:30003"
     volumes:
       - ./volumes/mongo3:/data/db
-      - ./docker/keyfile/mongo-keyfile:/run/secrets/mongo-keyfile:ro
+    secrets:
+      - mongo-keyfile
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --port 30003 --eval 'db.adminCommand({ ping: 1 })'"]
       interval: 10s
@@ -77,3 +95,6 @@ networks:
   mongo-net:
     driver: bridge
 
+secrets:
+  mongo-keyfile:
+    file: ./docker/keyfile/mongo-keyfile

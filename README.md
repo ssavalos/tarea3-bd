@@ -1,12 +1,12 @@
-﻿## Tarea 3 Â· MongoDB Replica Set + BÃºsqueda SemÃ¡ntica
+﻿## Tarea 3
 
 Este repositorio contiene todo lo solicitado en la Tarea 3 de INF-239:
 
 - `deploy-202373011-4-202304074-6.yml` y `docker-compose.yml` describen el Replica Set de 3 nodos (1 primario + 2 secundarios) con `mongod --replSet my-replicaset`, keyfile y volumenes persistentes.
 - `docker/init/init-rs.js` inicializa el Replica Set automÃ¡ticamente mediante el servicio auxiliar `rs-init`.
 - `conectarMongo.py` automatiza el procesamiento del corpus `DiscursosOriginales` y las consultas semÃ¡nticas sobre la colecciÃ³n `Politica.Discursos`.
-- `discursos-final-rol1-rol2.json` es el respaldo exportado con todos los documentos ya vectorizados.
-- `pymongo-ROL1-ROL2.ipynb` reÃºne las evidencias pedidas (despliegue, ingesta, consultas y guÃ­a de robustez).
+- `discursos-final-202373011-4-202304074-6.json` es el respaldo exportado con todos los documentos ya vectorizados.
+- `pymongo-202373011-4-202304074-6.ipynb` reÃºne las evidencias pedidas (despliegue, ingesta, consultas y guÃ­a de robustez).
 
 ### Requisitos previos
 
@@ -73,7 +73,7 @@ docker compose -f deploy-202373011-4-202304074-6.yml down
    }
    ```
 
-3. Los mismos documentos quedan guardados en `discursos-final-rol1-rol2.json` para el entregable 3.
+3. Los mismos documentos quedan guardados en `discursos-final-202373011-4-202304074-6.json` para el entregable 3.
 
 ### Consultas semÃ¡nticas
 
@@ -91,7 +91,7 @@ El script:
 
 ### Evidencias y pruebas solicitadas
 
-- Abre `pymongo-ROL1-ROL2.ipynb` (ya ejecutado) para revisar:
+- Abre `pymongo-202373011-4-202304074-6.ipynb` (ya ejecutado) para revisar:
   - Comandos de despliegue (con mensajes cuando Docker no estÃ¡ activo).
   - EjecuciÃ³n del pipeline de ingesta y vista previa de los documentos en el JSON final.
   - Consulta semÃ¡ntica offline para documentar los resultados.
