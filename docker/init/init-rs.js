@@ -2,7 +2,7 @@
 // Inicializa el replica set asegurando que no se duplique la configuración
 
 const replConfig = {
-  _id: "my-replicaset",
+  _id: "my-replica-set",
   members: [
     { _id: 0, host: "mongo1:30001", priority: 2 },
     { _id: 1, host: "mongo2:30002", priority: 1 },
@@ -46,4 +46,3 @@ function waitForPrimary(maxRetries = 20) {
 initiateReplicaSet();
 sleep(3000);
 waitForPrimary();
-

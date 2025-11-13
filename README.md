@@ -2,7 +2,7 @@
 
 Este repositorio contiene todo lo solicitado en la Tarea 3 de INF-239:
 
-- `deploy-202373011-4-202304074-6.yml` y `docker-compose.yml` describen el Replica Set de 3 nodos (1 primario + 2 secundarios) con `mongod --replSet my-replicaset`, keyfile y volumenes persistentes.
+- `deploy-202373011-4-202304074-6.yml` y `docker-compose.yml` describen el Replica Set de 3 nodos (1 primario + 2 secundarios) con `mongod --replSet my-replica-set`, keyfile y volúmenes persistentes.
 - `docker/init/init-rs.js` inicializa el Replica Set automÃ¡ticamente mediante el servicio auxiliar `rs-init`.
 - `conectarMongo.py` automatiza el procesamiento del corpus `DiscursosOriginales` y las consultas semÃ¡nticas sobre la colecciÃ³n `Politica.Discursos`.
 - `discursos-final-202373011-4-202304074-6.json` es el respaldo exportado con todos los documentos ya vectorizados.

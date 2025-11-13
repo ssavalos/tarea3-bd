@@ -27,7 +27,7 @@ from sentence_transformers import SentenceTransformer
 
 DEFAULT_CONNECTION = (
     "mongodb://mongo1:30001,mongo2:30002,mongo3:30003/"
-    "?replicaSet=my-replicaset&readPreference=primary&appname=MongoDB%20Compass&ssl=false"
+    "?replicaSet=my-replica-set&readPreference=primary&appname=MongoDB%20Compass&ssl=false"
 )
 DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 DEFAULT_DB = "Politica"
