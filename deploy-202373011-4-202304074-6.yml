@@ -76,7 +76,7 @@ services:
         condition: service_healthy
     networks: [mongo-net]
 
-  # Inicializa el Replica Set automáticamente al levantar (opcional pero recomendado)
+  # Inicializa el Replica Set automaticamente al levantar (opcional)
   rs-init:
     image: mongo:7.0
     container_name: rs-init

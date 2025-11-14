@@ -1,14 +1,14 @@
 """
 Funciones principales:
 1. --ingest: Calcula los embeddings del corpus DiscursosOriginales y los inserta en la
-   colección Politica.Discursos.
+   coleccion Politica.Discursos.
 2. --query: Recibe una consulta textual, calcula su embedding y entrega los 5 documentos
-   más similares mediante similitud coseno.
+   mas similares mediante similitud coseno.
 
 Ejemplos de uso:
     python conectarMongo.py --ingest
     python conectarMongo.py --ingest --skip-db --export-json tmp/discursos.json
-    python conectarMongo.py --query "Mensaje presidencial sobre educación pública"
+    python conectarMongo.py --query "Mensaje presidencial sobre educacion publica"
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ DEFAULT_EXPORT = Path("discursos-final-202373011-4-202304074-6.json")
 
 
 def build_client(uri: str) -> MongoClient:
-    """Crea un cliente de Mongo configurado para detectar fallas rápidamente."""
+    """Crea un cliente de Mongo configurado para detectar fallas rapidamente."""
     return MongoClient(uri, serverSelectionTimeoutMS=5000)
 
 
@@ -50,7 +50,7 @@ def read_text_file(path: Path) -> str:
 
 def documents_from_disk(dataset_dir: Path) -> List[dict]:
     if not dataset_dir.exists():
-        raise FileNotFoundError(f"No se encontró el directorio {dataset_dir}")
+        raise FileNotFoundError(f"No se encontro el directorio {dataset_dir}")
 
     docs: List[dict] = []
     for txt_path in sorted(dataset_dir.glob("*.txt")):
@@ -135,7 +135,7 @@ def ingest_pipeline(
         except PyMongoError as error:
             print(
                 "No fue posible insertar los documentos en MongoDB. "
-                "Verifique que el cluster esté arriba."
+                "Verifique que el cluster este arriba."
             )
             print(error)
 
@@ -163,7 +163,7 @@ def semantic_query(
         collection.find({}, {"_id": 1, "texto": 1, "embedding": 1, "metadata": 1})
     )
     if not stored_docs:
-        print("La colección está vacía. Ejecute primero el proceso de ingestión.")
+        print("La coleccion esta vacia. Ejecute primero el proceso de ingestion.")
         return
 
     model = SentenceTransformer(model_name)
@@ -194,7 +194,7 @@ def semantic_query(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Ingesta de discursos y búsquedas semánticas usando MongoDB Replica Set."
+        description="Ingesta de discursos y busquedas semanticas usando MongoDB Replica Set."
     )
     parser.add_argument("--connection-string", default=DEFAULT_CONNECTION)
     parser.add_argument("--database", default=DEFAULT_DB)
@@ -210,8 +210,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--skip-db", action="store_true", help="Evita conectarse a MongoDB.")
     parser.add_argument("--ingest", action="store_true", help="Ejecuta el pipeline de ingesta.")
-    parser.add_argument("--query", type=str, help="Texto a consultar de manera semántica.")
-    parser.add_argument("--top-k", type=int, default=5, help="Número de resultados a mostrar.")
+    parser.add_argument("--query", type=str, help="Texto a consultar de manera semantica.")
+    parser.add_argument("--top-k", type=int, default=5, help="Numero de resultados a mostrar.")
     return parser.parse_args()
 
 

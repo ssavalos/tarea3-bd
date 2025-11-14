@@ -1,5 +1,5 @@
 // docker/init/init-rs.js
-// Inicializa el replica set asegurando que no se duplique la configuración
+// Inicializa el replica set evitando configuraciones duplicadas
 
 const replConfig = {
   _id: "my-replica-set",
@@ -10,12 +10,24 @@ const replConfig = {
   ],
 };
 
-function initiateReplicaSet() {
-  const status = rs.status();
+function replicaAlreadyConfigured() {
+  try {
+    const status = rs.status();
+    if (status.ok === 1 && status.members && status.members.length > 0) {
+      print("Replica set already configured. Current status:");
+      printjson(status);
+      return true;
+    }
+  } catch (error) {
+    if (error.codeName !== "NotYetInitialized") {
+      print("Unable to read replica set status:", error);
+    }
+  }
+  return false;
+}
 
-  if (status.ok === 1 && status.members && status.members.length > 0) {
-    print("Replica set already configured. Current status:");
-    printjson(status);
+function initiateReplicaSet() {
+  if (replicaAlreadyConfigured()) {
     return;
   }
 
@@ -30,13 +42,17 @@ function initiateReplicaSet() {
 function waitForPrimary(maxRetries = 20) {
   let retries = 0;
   while (retries < maxRetries) {
-    const status = rs.status();
-    const primary = status.members?.find((member) => member.stateStr === "PRIMARY");
-    if (primary) {
-      print("Replica set PRIMARY is ready:", primary.name);
-      return;
+    try {
+      const status = rs.status();
+      const primary = status.members?.find((member) => member.stateStr === "PRIMARY");
+      if (primary) {
+        print("Replica set PRIMARY is ready:", primary.name);
+        return;
+      }
+      print("Waiting for PRIMARY election...");
+    } catch (error) {
+      print("Waiting for PRIMARY election (status not available yet):", error);
     }
-    print("Waiting for PRIMARY election...");
     sleep(2000);
     retries += 1;
   }

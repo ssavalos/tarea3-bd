@@ -1,17 +1,20 @@
-﻿## Tarea 3
+## Tarea 3 INF-239
 
-Este repositorio contiene todo lo solicitado en la Tarea 3 de INF-239:
+Grupo 5:
+- Sofia Avalos: 202373011-4
+- Nestor Lopez: 202304074-6
 
-- `deploy-202373011-4-202304074-6.yml` y `docker-compose.yml` describen el Replica Set de 3 nodos (1 primario + 2 secundarios) con `mongod --replSet my-replica-set`, keyfile y volúmenes persistentes.
-- `docker/init/init-rs.js` inicializa el Replica Set automÃ¡ticamente mediante el servicio auxiliar `rs-init`.
-- `conectarMongo.py` automatiza el procesamiento del corpus `DiscursosOriginales` y las consultas semÃ¡nticas sobre la colecciÃ³n `Politica.Discursos`.
-- `discursos-final-202373011-4-202304074-6.json` es el respaldo exportado con todos los documentos ya vectorizados.
-- `pymongo-202373011-4-202304074-6.ipynb` reÃºne las evidencias pedidas (despliegue, ingesta, consultas y guÃ­a de robustez).
+Esta tarea incluye exactamente los cuatro entregables solicitados:
+
+1. `deploy-202373011-4-202304074-6.yml`: Replica Set de 3 nodos con keyfile y volumenes persistentes.
+2. `pymongo-202373011-4-202304074-6.ipynb`: notebook ejecutado con las evidencias (despliegue, ingesta, consultas y pruebas de robustez).
+3. `discursos-final-202373011-4-202304074-6.json`: respaldo exportado con todos los documentos ya vectorizados.
+4. `README.md`: instrucciones de uso, supuestos y pasos reproducibles de la tarea.
 
 ### Requisitos previos
 
-1. **Docker Desktop** encendido (la conexiÃ³n da error si el servicio `com.docker.service` estÃ¡ detenido).
-2. **Python 3.10+** con `pip`. Ejecuta:
+1. **Docker Desktop** encendido (el comando falla si el servicio `com.docker.service` esta detenido).
+2. **Python 3.10+ con pip**. Instalacion sugerida:
 
    ```powershell
    python -m venv .venv
@@ -19,7 +22,7 @@ Este repositorio contiene todo lo solicitado en la Tarea 3 de INF-239:
    python -m pip install -r requirements.txt
    ```
 
-3. **Hosts locales**: agrega estas entradas para que PyMongo resuelva los nombres del Replica Set.
+3. **Hosts locales**: agrega las entradas para que PyMongo resuelva los nombres del Replica Set.
 
    ```
    127.0.0.1   mongo1
@@ -27,20 +30,12 @@ Este repositorio contiene todo lo solicitado en la Tarea 3 de INF-239:
    127.0.0.1   mongo3
    ```
 
-4. (Opcional) Activa *Developer Mode* en Windows para que HuggingFace pueda crear symlinks en el cachÃ©.
+4. (Opcional) Activa Developer Mode en Windows para que HuggingFace pueda crear symlinks en el cache.
 
 ### Puesta en marcha del Replica Set
 
 ```powershell
 docker compose -f deploy-202373011-4-202304074-6.yml up -d
-# o durante el desarrollo
-docker compose up -d
-```
-
-El servicio `rs-init` ejecuta `docker/init/init-rs.js` y deja el Replica Set listo. Revisa el estado con:
-
-```powershell
-docker exec -it mongo1 mongosh --port 30001 --eval "rs.status()"
 ```
 
 Para apagar la infraestructura:
@@ -49,7 +44,7 @@ Para apagar la infraestructura:
 docker compose -f deploy-202373011-4-202304074-6.yml down
 ```
 
-### Pipeline de ingesta + export
+### Pipeline de ingesta y export
 
 1. Procesa el corpus y sube los documentos (usa `--skip-db` si solo quieres generar el JSON):
 
@@ -58,7 +53,7 @@ docker compose -f deploy-202373011-4-202304074-6.yml down
    python conectarMongo.py --ingest --skip-db  # solo genera el JSON
    ```
 
-2. El script calcula el hash SHA-256 del texto, genera embeddings con `sentence-transformers/all-MiniLM-L6-v2`, normaliza los vectores y los almacena asÃ­:
+2. El script calcula el hash SHA-256 del texto, genera embeddings con `sentence-transformers/all-MiniLM-L6-v2`, normaliza los vectores y los almacena asi:
 
    ```json
    {
@@ -75,44 +70,38 @@ docker compose -f deploy-202373011-4-202304074-6.yml down
 
 3. Los mismos documentos quedan guardados en `discursos-final-202373011-4-202304074-6.json` para el entregable 3.
 
-### Consultas semÃ¡nticas
-
-Ejecuta:
+### Consultas semanticas
 
 ```powershell
-python conectarMongo.py --query "Mensaje presidencial sobre educaciÃ³n pÃºblica"
+python conectarMongo.py --query "Mensaje presidencial sobre educacion publica"
 ```
 
-El script:
-
-1. Obtiene el embedding de la consulta.
-2. Recupera los embeddings almacenados en MongoDB.
-3. Calcula la similitud coseno y muestra el *top 5* con fragmentos, archivo original y puntaje.
+El script obtiene el embedding de la consulta, calcula la similitud coseno con los embeddings almacenados y muestra el top 5 con fragmentos, archivo original y puntaje.
 
 ### Evidencias y pruebas solicitadas
 
-- Abre `pymongo-202373011-4-202304074-6.ipynb` (ya ejecutado) para revisar:
-  - Comandos de despliegue (con mensajes cuando Docker no estÃ¡ activo).
-  - EjecuciÃ³n del pipeline de ingesta y vista previa de los documentos en el JSON final.
-  - Consulta semÃ¡ntica offline para documentar los resultados.
-  - GuÃ­a para validar consistencia y alta disponibilidad (pasos de `docker stop/start` y `rs.status()`).
-- En la defensa puedes repetir las celdas que usan `run_cmd` para capturar las salidas en vivo.
+Abre `pymongo-202373011-4-202304074-6.ipynb` (ya ejecutado) para revisar:
 
-### Robustez (secciÃ³n 4 del enunciado)
+- Comandos de despliegue (incluye mensajes cuando Docker no esta activo).
+- Ejecucion del pipeline de ingesta y vista previa de los documentos en el JSON final.
+- Consulta semantica offline para documentar los resultados.
+- Guia para validar consistencia y alta disponibilidad.
 
-1. **Consistencia**: Inserta/actualiza documentos con `python conectarMongo.py --ingest` y verifica en cada nodo:
+### Robustez
+
+1. **Consistencia**: inserta o actualiza documentos con `python conectarMongo.py --ingest` y verifica en cada nodo:
+
    ```powershell
    docker exec -it mongo2 mongosh --port 30002 --eval "db.getSiblingDB('Politica').Discursos.countDocuments()"
    ```
-   El conteo debe coincidir con el primario (`mongo1`).
 
 2. **Alta disponibilidad**:
+
    ```powershell
    docker stop mongo1
    docker exec -it mongo2 mongosh --port 30002 --eval "rs.status().members.map(m => ({name: m.name, stateStr: m.stateStr}))"
    docker start mongo1
    ```
-   Documenta el cambio de rol PRIMARY en el notebook.
 
 ### Limpieza
 
@@ -120,5 +109,3 @@ El script:
 docker compose -f deploy-202373011-4-202304074-6.yml down -v
 Remove-Item .venv -Recurse -Force  # opcional
 ```
-
-Con esto quedan listos los 4 entregables exigidos (compose, notebook, JSON final y README + scripts Python).
