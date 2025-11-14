@@ -7,7 +7,7 @@ Funciones principales:
 
 Ejemplos de uso:
     python conectarMongo.py --ingest
-    python conectarMongo.py --ingest --skip-db --export-json tmp/discursos.json
+    python conectarMongo.py --ingest --skip-db
     python conectarMongo.py --query "Mensaje presidencial sobre educacion publica"
 """
 
@@ -25,59 +25,59 @@ from pymongo.collection import Collection
 from pymongo.errors import PyMongoError
 from sentence_transformers import SentenceTransformer
 
-DEFAULT_CONNECTION = (
+CADENA_CONEXION = (
     "mongodb://mongo1:30001,mongo2:30002,mongo3:30003/"
     "?replicaSet=my-replica-set&readPreference=primary&appname=MongoDB%20Compass&ssl=false"
 )
-DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-DEFAULT_DB = "Politica"
-DEFAULT_COLLECTION = "Discursos"
-DEFAULT_DATASET = Path("DiscursosOriginales")
-DEFAULT_EXPORT = Path("discursos-final-202373011-4-202304074-6.json")
+MODELO_POR_DEFECTO = "sentence-transformers/all-MiniLM-L6-v2"
+BASE_DATOS = "Politica"
+COLECCION = "Discursos"
+DIRECTORIO_DATOS = Path("DiscursosOriginales")
+ARCHIVO_EXPORTACION = Path("discursos-final-202373011-4-202304074-6.json")
 
 
-def build_client(uri: str) -> MongoClient:
+def crear_cliente(uri: str) -> MongoClient:
     """Crea un cliente de Mongo configurado para detectar fallas rapidamente."""
     return MongoClient(uri, serverSelectionTimeoutMS=5000)
 
 
-def read_text_file(path: Path) -> str:
+def leer_archivo_texto(ruta: Path) -> str:
     try:
-        return path.read_text(encoding="utf-8")
+        return ruta.read_text(encoding="utf-8")
     except UnicodeDecodeError:
-        return path.read_text(encoding="latin-1")
+        return ruta.read_text(encoding="latin-1")
 
 
-def documents_from_disk(dataset_dir: Path) -> List[dict]:
-    if not dataset_dir.exists():
-        raise FileNotFoundError(f"No se encontro el directorio {dataset_dir}")
+def documentos_desde_directorio(directorio: Path) -> List[dict]:
+    if not directorio.exists():
+        raise FileNotFoundError(f"No se encontro el directorio {directorio}")
 
-    docs: List[dict] = []
-    for txt_path in sorted(dataset_dir.glob("*.txt")):
-        text = read_text_file(txt_path).strip()
-        if not text:
+    documentos: List[dict] = []
+    for ruta_txt in sorted(directorio.glob("*.txt")):
+        texto = leer_archivo_texto(ruta_txt).strip()
+        if not texto:
             continue
-        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
-        docs.append(
+        hash_sha = hashlib.sha256(texto.encode("utf-8")).hexdigest()
+        documentos.append(
             {
-                "_id": digest,
-                "texto": text,
+                "_id": hash_sha,
+                "texto": texto,
                 "metadata": {
-                    "filename": txt_path.name,
-                    "source_path": str(txt_path),
+                    "filename": ruta_txt.name,
+                    "source_path": str(ruta_txt),
                 },
             }
         )
-    return docs
+    return documentos
 
 
-def encode_texts(
-    model_name: str, texts: Sequence[str], batch_size: int = 16
+def codificar_textos(
+    nombre_modelo: str, textos: Sequence[str], tamano_lote: int = 16
 ) -> np.ndarray:
-    model = SentenceTransformer(model_name)
-    embeddings = model.encode(
-        list(texts),
-        batch_size=batch_size,
+    modelo = SentenceTransformer(nombre_modelo)
+    embeddings = modelo.encode(
+        list(textos),
+        batch_size=tamano_lote,
         convert_to_numpy=True,
         normalize_embeddings=True,
         show_progress_bar=True,
@@ -85,53 +85,56 @@ def encode_texts(
     return embeddings
 
 
-def upsert_documents(collection: Collection, docs: Sequence[dict]) -> None:
-    operations = [
-        UpdateOne({"_id": doc["_id"]}, {"$set": doc}, upsert=True) for doc in docs
+def actualizar_documentos(coleccion: Collection, documentos: Sequence[dict]) -> None:
+    operaciones = [
+        UpdateOne({"_id": documento["_id"]}, {"$set": documento}, upsert=True)
+        for documento in documentos
     ]
-    if operations:
-        result = collection.bulk_write(operations, ordered=False)
+    if operaciones:
+        resultado = coleccion.bulk_write(operaciones, ordered=False)
         print(
-            f"Insertados: {result.upserted_count}, modificados: "
-            f"{result.modified_count}"
+            f"Insertados: {resultado.upserted_count}, modificados: "
+            f"{resultado.modified_count}"
         )
 
 
-def export_as_json(docs: Sequence[dict], output_path: Path) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", encoding="utf-8") as handler:
-        json.dump(docs, handler, ensure_ascii=False, indent=2)
-    print(f"Archivo JSON generado en {output_path}")
+def exportar_json(documentos: Sequence[dict], ruta_salida: Path) -> None:
+    ruta_salida.parent.mkdir(parents=True, exist_ok=True)
+    with ruta_salida.open("w", encoding="utf-8") as archivo:
+        json.dump(documentos, archivo, ensure_ascii=False, indent=2)
+    print(f"Archivo JSON generado en {ruta_salida}")
 
 
-def ingest_pipeline(
-    connection: str,
-    dataset_dir: Path,
-    model_name: str,
-    database: str,
-    collection_name: str,
-    export_path: Path | None,
-    skip_db: bool,
-    batch_size: int,
+def ejecutar_ingesta(
+    cadena_conexion: str,
+    directorio_dataset: Path,
+    nombre_modelo: str,
+    base_datos: str,
+    nombre_coleccion: str,
+    ruta_exportacion: Path | None,
+    omitir_bd: bool,
+    tamano_lote: int,
 ) -> None:
-    docs = documents_from_disk(dataset_dir)
-    if not docs:
+    documentos = documentos_desde_directorio(directorio_dataset)
+    if not documentos:
         print("No se encontraron discursos para procesar.")
         return
 
-    embeddings = encode_texts(model_name, [doc["texto"] for doc in docs], batch_size)
-    for doc, embedding in zip(docs, embeddings):
-        doc["embedding"] = embedding.astype(float).tolist()
-        doc["metadata"]["embedding_model"] = model_name
+    embeddings = codificar_textos(
+        nombre_modelo, [documento["texto"] for documento in documentos], tamano_lote
+    )
+    for documento, embedding in zip(documentos, embeddings):
+        documento["embedding"] = embedding.astype(float).tolist()
+        documento["metadata"]["embedding_model"] = nombre_modelo
 
-    if not skip_db:
+    if not omitir_bd:
         try:
-            client = build_client(connection)
-            db = client[database]
-            collection = db[collection_name]
-            upsert_documents(collection, docs)
-            primary = client.admin.command("hello").get("primary")
-            print(f"Replica set operativo. Primario actual: {primary}")
+            cliente = crear_cliente(cadena_conexion)
+            base = cliente[base_datos]
+            coleccion = base[nombre_coleccion]
+            actualizar_documentos(coleccion, documentos)
+            primario = cliente.admin.command("hello").get("primary")
+            print(f"Replica set operativo. Primario actual: {primario}")
         except PyMongoError as error:
             print(
                 "No fue posible insertar los documentos en MongoDB. "
@@ -139,73 +142,73 @@ def ingest_pipeline(
             )
             print(error)
 
-    if export_path:
-        export_as_json(docs, export_path)
+    if ruta_exportacion:
+        exportar_json(documentos, ruta_exportacion)
 
 
-def cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    b_norm = b / np.linalg.norm(b)
-    return np.dot(a, b_norm)
+def similitud_coseno(matriz: np.ndarray, vector: np.ndarray) -> np.ndarray:
+    vector_norm = vector / np.linalg.norm(vector)
+    return np.dot(matriz, vector_norm)
 
 
-def semantic_query(
-    connection: str,
-    database: str,
-    collection_name: str,
-    model_name: str,
-    query_text: str,
+def consulta_semantica(
+    cadena_conexion: str,
+    base_datos: str,
+    nombre_coleccion: str,
+    nombre_modelo: str,
+    texto_consulta: str,
     top_k: int,
-    batch_size: int,
+    tamano_lote: int,
 ) -> None:
-    client = build_client(connection)
-    collection = client[database][collection_name]
-    stored_docs = list(
-        collection.find({}, {"_id": 1, "texto": 1, "embedding": 1, "metadata": 1})
+    cliente = crear_cliente(cadena_conexion)
+    coleccion = cliente[base_datos][nombre_coleccion]
+    documentos = list(
+        coleccion.find({}, {"_id": 1, "texto": 1, "embedding": 1, "metadata": 1})
     )
-    if not stored_docs:
+    if not documentos:
         print("La coleccion esta vacia. Ejecute primero el proceso de ingestion.")
         return
 
-    model = SentenceTransformer(model_name)
-    query_embedding = model.encode(
-        [query_text],
-        batch_size=batch_size,
+    modelo = SentenceTransformer(nombre_modelo)
+    embedding_consulta = modelo.encode(
+        [texto_consulta],
+        batch_size=tamano_lote,
         convert_to_numpy=True,
         normalize_embeddings=True,
     )[0]
 
-    matrix = np.array([doc["embedding"] for doc in stored_docs], dtype=np.float32)
-    scores = cosine_similarity(matrix, query_embedding)
+    matriz = np.array([documento["embedding"] for documento in documentos], dtype=np.float32)
+    puntajes = similitud_coseno(matriz, embedding_consulta)
 
-    ordered = sorted(
-        zip(stored_docs, scores), key=lambda item: item[1], reverse=True
+    ordenados = sorted(
+        zip(documentos, puntajes), key=lambda par: par[1], reverse=True
     )[:top_k]
 
-    print(f"\nTop {top_k} resultados para la consulta: \"{query_text}\"\n")
-    for position, (doc, score) in enumerate(ordered, start=1):
-        metadata = doc.get("metadata", {})
-        filename = metadata.get("filename", "N/A")
-        print(f"[{position}] ID: {doc['_id']} | archivo: {filename}")
-        print(f"   Puntaje coseno: {score:.4f}")
-        snippet = doc["texto"][:220].replace("\n", " ")
-        print(f"   Fragmento: {snippet}...")
+    print(f"\nTop {top_k} resultados para la consulta: \"{texto_consulta}\"\n")
+    for posicion, (documento, puntaje) in enumerate(ordenados, start=1):
+        metadatos = documento.get("metadata", {})
+        nombre_archivo = metadatos.get("filename", "N/A")
+        print(f"[{posicion}] ID: {documento['_id']} | archivo: {nombre_archivo}")
+        print(f"   Puntaje coseno: {puntaje:.4f}")
+        fragmento = documento["texto"][:220].replace("\n", " ")
+        print(f"   Fragmento: {fragmento}...")
         print("-" * 80)
 
 
-def parse_args() -> argparse.Namespace:
+def parsear_argumentos() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Ingesta de discursos y busquedas semanticas usando MongoDB Replica Set."
     )
-    parser.add_argument("--connection-string", default=DEFAULT_CONNECTION)
-    parser.add_argument("--database", default=DEFAULT_DB)
-    parser.add_argument("--collection", default=DEFAULT_COLLECTION)
-    parser.add_argument("--dataset-dir", type=Path, default=DEFAULT_DATASET)
-    parser.add_argument("--model-name", default=DEFAULT_MODEL)
+    parser.add_argument("--connection-string", default=CADENA_CONEXION)
+    parser.add_argument("--database", default=BASE_DATOS)
+    parser.add_argument("--collection", default=COLECCION)
+    parser.add_argument("--dataset-dir", type=Path, default=DIRECTORIO_DATOS)
+    parser.add_argument("--model-name", default=MODELO_POR_DEFECTO)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument(
         "--export-json",
         type=Path,
-        default=DEFAULT_EXPORT,
+        default=ARCHIVO_EXPORTACION,
         help="Ruta del archivo JSON a generar tras la ingesta.",
     )
     parser.add_argument("--skip-db", action="store_true", help="Evita conectarse a MongoDB.")
@@ -216,33 +219,33 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    args = parse_args()
+    argumentos = parsear_argumentos()
 
-    if not args.ingest and not args.query:
+    if not argumentos.ingest and not argumentos.query:
         print("Debes indicar --ingest, --query o ambos.")
         return
 
-    if args.ingest:
-        ingest_pipeline(
-            connection=args.connection_string,
-            dataset_dir=args.dataset_dir,
-            model_name=args.model_name,
-            database=args.database,
-            collection_name=args.collection,
-            export_path=args.export_json,
-            skip_db=args.skip_db,
-            batch_size=args.batch_size,
+    if argumentos.ingest:
+        ejecutar_ingesta(
+            cadena_conexion=argumentos.connection_string,
+            directorio_dataset=argumentos.dataset_dir,
+            nombre_modelo=argumentos.model_name,
+            base_datos=argumentos.database,
+            nombre_coleccion=argumentos.collection,
+            ruta_exportacion=argumentos.export_json,
+            omitir_bd=argumentos.skip_db,
+            tamano_lote=argumentos.batch_size,
         )
 
-    if args.query:
-        semantic_query(
-            connection=args.connection_string,
-            database=args.database,
-            collection_name=args.collection,
-            model_name=args.model_name,
-            query_text=args.query,
-            top_k=args.top_k,
-            batch_size=args.batch_size,
+    if argumentos.query:
+        consulta_semantica(
+            cadena_conexion=argumentos.connection_string,
+            base_datos=argumentos.database,
+            nombre_coleccion=argumentos.collection,
+            nombre_modelo=argumentos.model_name,
+            texto_consulta=argumentos.query,
+            top_k=argumentos.top_k,
+            tamano_lote=argumentos.batch_size,
         )
 
 

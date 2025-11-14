@@ -5,18 +5,11 @@ services:
     image: mongo:7.0
     container_name: mongo1
     hostname: mongo1
-    command:
-      [
-        "bash",
-        "-c",
-        "cp /run/secrets/mongo-keyfile /tmp/mongo-keyfile && chmod 600 /tmp/mongo-keyfile && exec mongod --replSet my-replica-set --port 30001 --bind_ip_all --keyFile /tmp/mongo-keyfile",
-      ]
+    command: ["mongod", "--replSet", "my-replica-set", "--port", "30001", "--bind_ip_all"]
     ports:
       - "30001:30001"
     volumes:
       - ./volumes/mongo1:/data/db
-    secrets:
-      - mongo-keyfile
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --port 30001 --eval 'db.adminCommand({ ping: 1 })'"]
       interval: 10s
@@ -28,18 +21,11 @@ services:
     image: mongo:7.0
     container_name: mongo2
     hostname: mongo2
-    command:
-      [
-        "bash",
-        "-c",
-        "cp /run/secrets/mongo-keyfile /tmp/mongo-keyfile && chmod 600 /tmp/mongo-keyfile && exec mongod --replSet my-replica-set --port 30002 --bind_ip_all --keyFile /tmp/mongo-keyfile",
-      ]
+    command: ["mongod", "--replSet", "my-replica-set", "--port", "30002", "--bind_ip_all"]
     ports:
       - "30002:30002"
     volumes:
       - ./volumes/mongo2:/data/db
-    secrets:
-      - mongo-keyfile
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --port 30002 --eval 'db.adminCommand({ ping: 1 })'"]
       interval: 10s
@@ -54,18 +40,11 @@ services:
     image: mongo:7.0
     container_name: mongo3
     hostname: mongo3
-    command:
-      [
-        "bash",
-        "-c",
-        "cp /run/secrets/mongo-keyfile /tmp/mongo-keyfile && chmod 600 /tmp/mongo-keyfile && exec mongod --replSet my-replica-set --port 30003 --bind_ip_all --keyFile /tmp/mongo-keyfile",
-      ]
+    command: ["mongod", "--replSet", "my-replica-set", "--port", "30003", "--bind_ip_all"]
     ports:
       - "30003:30003"
     volumes:
       - ./volumes/mongo3:/data/db
-    secrets:
-      - mongo-keyfile
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --port 30003 --eval 'db.adminCommand({ ping: 1 })'"]
       interval: 10s
@@ -76,7 +55,7 @@ services:
         condition: service_healthy
     networks: [mongo-net]
 
-  # Inicializa el Replica Set automaticamente al levantar (opcional)
+  # Inicializa el Replica Set automaticamente al levantar 
   rs-init:
     image: mongo:7.0
     container_name: rs-init
@@ -89,13 +68,9 @@ services:
         condition: service_healthy
     volumes:
       - ./docker/init:/docker-entrypoint-init
-    entrypoint: [ "bash", "-c", "sleep 8 && mongosh --host mongo1 --port 30001 /docker-entrypoint-init/init-rs.js" ]
+    entrypoint: ["bash", "-c", "sleep 8 && mongosh --host mongo1 --port 30001 /docker-entrypoint-init/init-rs.js"]
     networks: [mongo-net]
 
 networks:
   mongo-net:
     driver: bridge
-
-secrets:
-  mongo-keyfile:
-    file: ./docker/keyfile/mongo-keyfile

@@ -6,23 +6,22 @@ Grupo 5:
 
 Esta tarea incluye exactamente los cuatro entregables solicitados:
 
-1. `deploy-202373011-4-202304074-6.yml`: Replica Set de 3 nodos con keyfile y volumenes persistentes.
+1. `deploy-202373011-4-202304074-6.yml`: Replica Set de 3 nodos con volumenes persistentes.
 2. `pymongo-202373011-4-202304074-6.ipynb`: notebook ejecutado con las evidencias (despliegue, ingesta, consultas y pruebas de robustez).
 3. `discursos-final-202373011-4-202304074-6.json`: respaldo exportado con todos los documentos ya vectorizados.
 4. `README.md`: instrucciones de uso, supuestos y pasos reproducibles de la tarea.
 
 ### Requisitos previos
 
-1. **Docker Desktop** encendido (el comando falla si el servicio `com.docker.service` esta detenido).
-2. **Python 3.10+ con pip**. Instalacion sugerida:
+1. **Docker Desktop** encendido.
+
+2. **Python 3.10+ con pip**. Instala las dependencias usadas en el notebook:
 
    ```powershell
-   python -m venv .venv
-   .\.venv\Scripts\activate
-   python -m pip install -r requirements.txt
+   python -m pip install pymongo sentence-transformers numpy torch
    ```
 
-3. **Hosts locales**: agrega las entradas para que PyMongo resuelva los nombres del Replica Set.
+3. **Hosts locales**: agrega estas entradas en `C:\Windows\System32\drivers\etc\hosts` (abrir el editor como Administrador) para que PyMongo y `mongosh` resuelvan los nombres del Replica Set:
 
    ```
    127.0.0.1   mongo1
@@ -30,9 +29,7 @@ Esta tarea incluye exactamente los cuatro entregables solicitados:
    127.0.0.1   mongo3
    ```
 
-4. (Opcional) Activa Developer Mode en Windows para que HuggingFace pueda crear symlinks en el cache.
-
-### Puesta en marcha del Replica Set
+### Como poner en marcha el Replica Set
 
 ```powershell
 docker compose -f deploy-202373011-4-202304074-6.yml up -d
@@ -46,7 +43,7 @@ docker compose -f deploy-202373011-4-202304074-6.yml down
 
 ### Pipeline de ingesta y export
 
-1. Procesa el corpus y sube los documentos (usa `--skip-db` si solo quieres generar el JSON):
+1. Procesar el corpus y subir los documentos (usa `--skip-db` si solo se quiere generar el JSON):
 
    ```powershell
    python conectarMongo.py --ingest            # inserta en Politica.Discursos
@@ -68,9 +65,9 @@ docker compose -f deploy-202373011-4-202304074-6.yml down
    }
    ```
 
-3. Los mismos documentos quedan guardados en `discursos-final-202373011-4-202304074-6.json` para el entregable 3.
+3. Los mismos documentos quedan guardados en `discursos-final-202373011-4-202304074-6.json`.
 
-### Consultas semanticas
+### Consultas semanticas con conectarMongo.py
 
 ```powershell
 python conectarMongo.py --query "Mensaje presidencial sobre educacion publica"
@@ -80,12 +77,18 @@ El script obtiene el embedding de la consulta, calcula la similitud coseno con l
 
 ### Evidencias y pruebas solicitadas
 
-Abre `pymongo-202373011-4-202304074-6.ipynb` (ya ejecutado) para revisar:
+Abrir `pymongo-202373011-4-202304074-6.ipynb` (ya ejecutado) para revisar:
 
-- Comandos de despliegue (incluye mensajes cuando Docker no esta activo).
+- Comandos de despliegue.
 - Ejecucion del pipeline de ingesta y vista previa de los documentos en el JSON final.
 - Consulta semantica offline para documentar los resultados.
 - Guia para validar consistencia y alta disponibilidad.
+
+Ejecutar las celdas en orden, de arriba hacia abajo, para garantizar que las variables y scripts necesarios queden cargados. Si se desea generar todo el notebook de una sola vez desde la terminal, usar:
+
+```powershell
+jupyter nbconvert --to notebook --execute pymongo-202373011-4-202304074-6.ipynb --output pymongo-202373011-4-202304074-6.ipynb
+```
 
 ### Robustez
 
